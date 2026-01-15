@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Linguist Quest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #1d2b53;
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+}
+
+#game-container {
+    max-width: 520px;
+    height: 100%;
+    margin: auto;
+    border: 6px solid black;
+    background: url("battle_bg.png") center/cover;
+    position: relative;
+}
+
+.screen {
+    display: none;
+    height: 100%;
+    padding: 0;
+}
+.screen.active {
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
+    color: #ffcc00;
+    margin-top: 40px;
+}
+
+/* HOME MENU */
+.menu {
+    margin-top: 80px; /* moved down on home screen */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.btn {
+    padding: 15px;
+    background: #7e2553;
+    border: 4px solid white;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+/* TOP BUTTONS */
+#music-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding: 8px 14px;
+    background: #1b1f33;
+    border: 2px solid #ffcc00;
+    color: #ffcc00;
+    font-size: 9px;
+    cursor: pointer;
+}
+
+#reset-btn {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 12px 22px;
+    background: #262b44;
+    border: 2px solid #ffcc00;
+    color: #ffcc00;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+#battle-music-toggle {
+    position: absolute;
+    top: 54px;
+    left: 14px;
+    padding: 10px 18px;
+    background: #1b1f33;
+    border: 2px solid #00e436;
+    color: #00e436;
+    font-size: 9px;
+    cursor: pointer;
+}
+
+/* BATTLE */
+#battle-stage {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 40%;
+}
+
+.actor {
+    width: 130px;
+    height: 130px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: bottom;
+}
+
+#player { background-image: url("hero_warrior.png"); }
+#monster { position: relative; }
+
+.hp-container {
+    position: absolute;
+    top: -15px;
+    width: 100%;
+    height: 10px;
+    background: black;
+    border: 2px solid white;
+}
+
+#monster-hp {
+    height: 100%;
+    background: #00e436;
+}
+
+/* UI — full width, fixed height, moved down */
+#ui {
+    background: rgba(0,0,0,0.85);
+    padding: 15px;
+    border-top: 4px solid white;
+}
+
+/* Question text */
+#question-text {
+    width: 100%;
+    margin-bottom: 12px; /* space from options */
+    word-wrap: break-word;
+    font: size 14px;
+    font-weight: bold;
+}
+
+/* Answer buttons */
+.answer-btn {
+    width: 100%;
+    margin: 6px 0;
+    padding: 12px;
+    background: black;
+    border: 2px solid #5f574f;
+    color: #ffa300;
+    font-size: 11px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUDIO -->
+<audio id="homeMusic" src="home_music.mp3" loop></audio>
+<audio id="battleMusic" src="battle_music.mp3" loop></audio>
+
+<div id="game-container">
+
+<!-- HOME SCREEN -->
+<div id="home-screen" class="screen active">
+    <button id="music-toggle">MUSIC: OFF</button>
+
+    <h1>LINGUIST<br>QUEST
+
+    <div class="menu">
+        <button class="btn" data-lang="English">ENGLISH</button>
+        <button class="btn" data-lang="Hindi">HINDI</button>
+        <button class="btn" data-lang="French">FRENCH</button>
+        <button class="btn" data-lang="Sanskrit">SANSKRIT</button>
+    </div>
+</div>
+
+<!-- BATTLE SCREEN -->
+<div id="battle-screen" class="screen">
+    <button id="reset-btn">Reset</button>
+    <button id="battle-music-toggle">BATTLE MUSIC: OFF</button>
+
+    <div id="battle-stage">
+        <div id="player" class="actor"></div>
+        <div id="monster" class="actor">
+            <div class="hp-container">
+                <div id="monster-hp"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question & answer box (moved down) -->
+    <div id="ui">
+        <div id="question-text"></div>
+        <div id="options-container"></div>
+    </div>
+</div>
+
+</div>
+
+<script type="module">
+import "./main.js";
+
+const homeMusic = document.getElementById("homeMusic");
+const battleMusic = document.getElementById("battleMusic");
+const musicToggle = document.getElementById("music-toggle");
+const battleToggle = document.getElementById("battle-music-toggle");
+const resetBtn = document.getElementById("reset-btn");
+
+homeMusic.volume = 0.4;
+battleMusic.volume = 0.4;
+
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioCtx();
+
+let homeOn = false;
+let battleOn = false;
+
+/* HOME MUSIC */
+musicToggle.onclick = () => {
+    if (audioCtx.state !== "running") audioCtx.resume();
+    homeOn = !homeOn;
+    musicToggle.textContent = homeOn ? "MUSIC: ON" : "MUSIC: OFF";
+
+    if (homeOn) {
+        homeMusic.currentTime = 0;
+        homeMusic.play();
+    } else {
+        homeMusic.pause();
+    }
+};
+
+/* BATTLE MUSIC BUTTON */
+battleToggle.onclick = () => {
+    if (audioCtx.state !== "running") audioCtx.resume();
+    battleOn = !battleOn;
+    battleToggle.textContent = battleOn ? "BATTLE MUSIC: ON" : "BATTLE MUSIC: OFF";
+
+    if (battleOn) {
+        battleMusic.currentTime = 0;
+        battleMusic.play();
+    } else {
+        battleMusic.pause();
+    }
+};
+
+/* START GAME */
+document.querySelectorAll(".btn").forEach(btn => {
+    btn.onclick = () => {
+        homeMusic.pause();
+        if (battleOn) {
+            battleMusic.currentTime = 0;
+            battleMusic.play();
+        }
+        window.startGame(btn.dataset.lang);
+    };
+});
+
+/* RESET */
+resetBtn.onclick = () => {
+    battleMusic.pause();
+    if (homeOn) {
+        homeMusic.currentTime = 0;
+        homeMusic.play();
+    }
+    window.resetGame();
+};
+</script>
+
+</body>
+</html>
